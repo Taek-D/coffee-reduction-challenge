@@ -38,10 +38,15 @@ export function SettingsPage() {
       setConfirmReset(true);
       return;
     }
-    await resetCurrentUserData();
-    setConfirmReset(false);
-    showToast('초기화했어요.');
-    track('data_reset_confirm');
+    try {
+      await resetCurrentUserData();
+      setConfirmReset(false);
+      showToast('초기화했어요.');
+      track('data_reset_confirm');
+    } catch {
+      setConfirmReset(false);
+      showToast('초기화에 실패했어요. 다시 시도해요.');
+    }
   };
 
   const handleRestore = async () => {

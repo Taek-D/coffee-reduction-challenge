@@ -66,15 +66,23 @@ export function OnboardingPage() {
   };
 
   const handleStart = async () => {
-    await completeOnboarding();
-    track('onboarding_cta_start');
-    navigate('/login');
+    try {
+      await completeOnboarding();
+      track('onboarding_cta_start');
+      navigate('/login');
+    } catch {
+      navigate('/login');
+    }
   };
 
   const handleSkip = async () => {
-    await completeOnboarding();
-    await ensureDefaultsForCurrentUser();
-    track('onboarding_skip');
+    try {
+      await completeOnboarding();
+      await ensureDefaultsForCurrentUser();
+      track('onboarding_skip');
+    } catch {
+      // 온보딩 완료 실패해도 메인으로 이동
+    }
     navigate('/today');
   };
 

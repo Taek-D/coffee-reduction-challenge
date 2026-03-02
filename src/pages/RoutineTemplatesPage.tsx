@@ -39,12 +39,17 @@ export function RoutineTemplatesPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const premium = await getFreshPremiumStatus(repository, activeUserKey);
-      if (!isPremiumActive(premium)) {
+      try {
+        const premium = await getFreshPremiumStatus(repository, activeUserKey);
+        if (!isPremiumActive(premium)) {
+          navigate('/premium?entry=routine_templates', { replace: true });
+          return;
+        }
+        track('routine_view');
+      } catch {
         navigate('/premium?entry=routine_templates', { replace: true });
         return;
       }
-      track('routine_view');
       setLoading(false);
     };
 

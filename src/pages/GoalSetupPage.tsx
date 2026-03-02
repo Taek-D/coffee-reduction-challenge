@@ -7,10 +7,12 @@ import { parseNumberInput } from '../shared/format';
 import { todayDateIso } from '../shared/date';
 import type { GoalType } from '../domain/models';
 import { validateGoalForm, type GoalFormErrors } from '../domain/validation';
+import { useToast } from '../state/ToastContext';
 
 export function GoalSetupPage() {
   const navigate = useNavigate();
   const { activeUserKey, repository } = useAppContext();
+  const { showToast } = useToast();
 
   const [goalType, setGoalType] = useState<GoalType>('weekly_limit');
   const [weeklyLimit, setWeeklyLimit] = useState('7');
@@ -68,24 +70,28 @@ export function GoalSetupPage() {
       return;
     }
 
-    await repository.saveGoal({
-      userKey: activeUserKey,
-      goal_type: goalType,
-      ...(goalType === 'weekly_limit'
-        ? { weekly_limit: input.weeklyLimit ?? undefined }
-        : { monthly_budget: input.monthlyBudget ?? undefined }),
-    });
+    try {
+      await repository.saveGoal({
+        userKey: activeUserKey,
+        goal_type: goalType,
+        ...(goalType === 'weekly_limit'
+          ? { weekly_limit: input.weeklyLimit ?? undefined }
+          : { monthly_budget: input.monthlyBudget ?? undefined }),
+      });
 
-    await repository.addBaselineVersion({
-      userKey: activeUserKey,
-      effective_from: todayDateIso(),
-      avg_per_day: input.baselineAvgPerDay ?? 0,
-      unit_amount: input.unitAmount ?? 4500,
-    });
+      await repository.addBaselineVersion({
+        userKey: activeUserKey,
+        effective_from: todayDateIso(),
+        avg_per_day: input.baselineAvgPerDay ?? 0,
+        unit_amount: input.unitAmount ?? 4500,
+      });
 
-    setErrors({});
-    track('goal_save', { result: 'success', goal_type: goalType });
-    navigate('/today');
+      setErrors({});
+      track('goal_save', { result: 'success', goal_type: goalType });
+      navigate('/today');
+    } catch {
+      showToast('저장에 실패했어요. 다시 시도해요.');
+    }
   };
 
   const selectGoalType = (type: GoalType) => {
