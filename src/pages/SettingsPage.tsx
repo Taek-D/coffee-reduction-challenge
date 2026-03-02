@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton } from '@toss/tds-mobile';
 import type { BaselineVersion, Goal } from '../domain/models';
 import { toPremiumStatusText } from '../domain/premium';
 import { track } from '../infra/analytics';
@@ -16,17 +16,25 @@ export function SettingsPage() {
   const [premiumText, setPremiumText] = useState('무료');
   const [confirmReset, setConfirmReset] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const [goalData, premium, baselineList] = await Promise.all([
-        repository.getGoal(activeUserKey),
-        getFreshPremiumStatus(repository, activeUserKey),
-        repository.getBaselines(activeUserKey),
-      ]);
-      setGoal(goalData);
-      setBaselines(baselineList);
-      setPremiumText(toPremiumStatusText(premium));
+      setLoading(true);
+      try {
+        const [goalData, premium, baselineList] = await Promise.all([
+          repository.getGoal(activeUserKey),
+          getFreshPremiumStatus(repository, activeUserKey),
+          repository.getBaselines(activeUserKey),
+        ]);
+        setGoal(goalData);
+        setBaselines(baselineList);
+        setPremiumText(toPremiumStatusText(premium));
+      } catch {
+        // 설정 데이터 로드 실패 시 기본값 유지
+      } finally {
+        setLoading(false);
+      }
     };
 
     track('settings_view');
@@ -74,6 +82,14 @@ export function SettingsPage() {
       setRestoring(false);
     }
   };
+
+  if (loading) {
+    return (
+      <section className="screen">
+        <Skeleton height={72} />
+      </section>
+    );
+  }
 
   return (
     <section className="screen">
