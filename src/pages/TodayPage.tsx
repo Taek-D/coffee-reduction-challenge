@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton, TextField } from '@toss/tds-mobile';
 import { calculateDailyMetrics } from '../domain/calculations';
 import { DEFAULT_UNIT_AMOUNT, type BaselineVersion, type Entry } from '../domain/models';
 import { track } from '../infra/analytics';
@@ -99,7 +99,7 @@ export function TodayPage() {
   if (loading) {
     return (
       <section className="screen">
-        <div className="skeleton-box">불러오는 중이에요...</div>
+        <Skeleton height={72} />
       </section>
     );
   }
@@ -142,7 +142,8 @@ export function TodayPage() {
 
       <div className="card form">
         <label htmlFor="unitAmountEdit">단가 수정 (100~50,000)</label>
-        <input
+        <TextField
+          variant="box"
           id="unitAmountEdit"
           inputMode="numeric"
           value={unitAmountInput}

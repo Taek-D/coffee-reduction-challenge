@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton } from '@toss/tds-mobile';
 import { calculateDailyMetrics } from '../domain/calculations';
 import type { BaselineVersion, Entry } from '../domain/models';
 import { track } from '../infra/analytics';
@@ -89,7 +89,7 @@ export function CalendarPage() {
   if (loading) {
     return (
       <section className="screen">
-        <div className="skeleton-box">불러오는 중이에요...</div>
+        <Skeleton height={72} />
       </section>
     );
   }

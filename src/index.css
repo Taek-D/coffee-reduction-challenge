@@ -98,22 +98,6 @@ a {
   gap: 0.25rem;
 }
 
-.skeleton-box {
-  min-height: 72px;
-  border-radius: 12px;
-  background: linear-gradient(110deg, #f2f5fb 8%, #e5ebf8 18%, #f2f5fb 33%);
-  animation: shimmer 1.2s infinite linear;
-}
-
-@keyframes shimmer {
-  from {
-    background-position-x: 0;
-  }
-  to {
-    background-position-x: 360px;
-  }
-}
-
 .form-screen {
   padding-top: 1rem;
 }
@@ -121,15 +105,6 @@ a {
 .form {
   display: grid;
   gap: 0.5rem;
-}
-
-input {
-  width: 100%;
-  border: 1px solid #cdd8ea;
-  border-radius: 10px;
-  padding: 0.625rem 0.75rem;
-  font-size: 1rem;
-  background-color: #fff;
 }
 
 fieldset {

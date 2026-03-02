@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, TextField } from '@toss/tds-mobile';
 import { track } from '../infra/analytics';
 import { tryTossLogin } from '../infra/auth';
 import { resolveUserKeyFromAuthorizationCode } from '../infra/userKeyResolver';
@@ -67,7 +67,8 @@ export function LoginPage() {
 
       <form className="form" onSubmit={handleLogin}>
         <label htmlFor="userKey">userKey</label>
-        <input
+        <TextField
+          variant="box"
           id="userKey"
           value={userKeyInput}
           onChange={(event) => setUserKeyInput(event.target.value)}

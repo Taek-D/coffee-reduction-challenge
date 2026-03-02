@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton, TextField } from '@toss/tds-mobile';
 import { track } from '../infra/analytics';
 import { useAppContext } from '../state/AppContext';
 import { parseNumberInput } from '../shared/format';
@@ -94,7 +94,11 @@ export function GoalSetupPage() {
   };
 
   if (loading) {
-    return <section className="screen">불러오는 중이에요...</section>;
+    return (
+      <section className="screen">
+        <Skeleton height={72} />
+      </section>
+    );
   }
 
   return (
@@ -127,7 +131,8 @@ export function GoalSetupPage() {
         {goalType === 'weekly_limit' && (
           <>
             <label htmlFor="weeklyLimit">주간 횟수 (0~50)</label>
-            <input
+            <TextField
+              variant="box"
               id="weeklyLimit"
               inputMode="numeric"
               value={weeklyLimit}
@@ -140,7 +145,8 @@ export function GoalSetupPage() {
         {goalType === 'monthly_budget' && (
           <>
             <label htmlFor="monthlyBudget">월 예산 (0~5,000,000)</label>
-            <input
+            <TextField
+              variant="box"
               id="monthlyBudget"
               inputMode="numeric"
               value={monthlyBudget}
@@ -151,7 +157,8 @@ export function GoalSetupPage() {
         )}
 
         <label htmlFor="baselineAvgPerDay">평소 하루 커피 잔수 (0~20)</label>
-        <input
+        <TextField
+          variant="box"
           id="baselineAvgPerDay"
           inputMode="numeric"
           value={baselineAvgPerDay}
@@ -160,7 +167,8 @@ export function GoalSetupPage() {
         {errors.baselineAvgPerDay && <p className="error">{errors.baselineAvgPerDay}</p>}
 
         <label htmlFor="unitAmount">평균 단가 (100~50,000)</label>
-        <input
+        <TextField
+          variant="box"
           id="unitAmount"
           inputMode="numeric"
           value={unitAmount}

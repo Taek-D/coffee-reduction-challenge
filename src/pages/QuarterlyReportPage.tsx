@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton } from '@toss/tds-mobile';
 import { calculateReportMetrics, type ReportMetrics } from '../domain/report';
 import { isPremiumActive } from '../domain/premium';
 import { track } from '../infra/analytics';
@@ -143,7 +143,7 @@ export function QuarterlyReportPage() {
   if (loading) {
     return (
       <section className="screen">
-        <div className="skeleton-box">리포트를 불러오는 중이에요...</div>
+        <Skeleton height={72} />
       </section>
     );
   }

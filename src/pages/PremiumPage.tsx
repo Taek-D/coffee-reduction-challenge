@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@toss/tds-mobile';
+import { Button, Skeleton } from '@toss/tds-mobile';
 import {
   PREMIUM_PLAN_DEFINITIONS,
   PREMIUM_PLANS,
@@ -87,7 +87,7 @@ export function PremiumPage() {
   if (loading) {
     return (
       <section className="screen">
-        <div className="skeleton-box">불러오는 중이에요...</div>
+        <Skeleton height={72} />
       </section>
     );
   }

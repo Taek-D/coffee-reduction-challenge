@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Skeleton } from '@toss/tds-mobile';
 import { isPremiumActive } from '../domain/premium';
 import { track } from '../infra/analytics';
 import { getFreshPremiumStatus } from '../infra/premiumService';
@@ -53,7 +54,7 @@ export function RoutineTemplatesPage() {
   if (loading) {
     return (
       <section className="screen">
-        <div className="skeleton-box">불러오는 중이에요...</div>
+        <Skeleton height={72} />
       </section>
     );
   }
