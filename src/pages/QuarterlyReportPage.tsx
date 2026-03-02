@@ -80,33 +80,38 @@ export function QuarterlyReportPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const premium = await getFreshPremiumStatus(repository, activeUserKey);
-      if (!isPremiumActive(premium)) {
-        navigate('/premium?entry=report_quarterly', { replace: true });
-        return;
+      try {
+        const premium = await getFreshPremiumStatus(repository, activeUserKey);
+        if (!isPremiumActive(premium)) {
+          navigate('/premium?entry=report_quarterly', { replace: true });
+          return;
+        }
+
+        const months = getQuarterMonths(year, quarter);
+        const [monthEntries, baselines] = await Promise.all([
+          Promise.all(months.map((month) => repository.listEntriesForMonth(activeUserKey, month))),
+          repository.getBaselines(activeUserKey),
+        ]);
+        const entries = monthEntries.flat();
+        const range = getQuarterRange(year, quarter);
+        const metrics = calculateReportMetrics(entries, (date) => resolveBaselineForDate(baselines, date));
+
+        setState({
+          metrics,
+          baselineSummary: summarizeBaselinesForPeriod(baselines, range.start, range.end),
+          hasData: metrics.totalRecordDays > 0,
+        });
+
+        track('report_view', { type: 'quarterly', period: `${year}-Q${quarter}` });
+      } catch {
+        showToast('리포트를 불러오지 못했어요. 다시 시도해요.');
+      } finally {
+        setLoading(false);
       }
-
-      const months = getQuarterMonths(year, quarter);
-      const [monthEntries, baselines] = await Promise.all([
-        Promise.all(months.map((month) => repository.listEntriesForMonth(activeUserKey, month))),
-        repository.getBaselines(activeUserKey),
-      ]);
-      const entries = monthEntries.flat();
-      const range = getQuarterRange(year, quarter);
-      const metrics = calculateReportMetrics(entries, (date) => resolveBaselineForDate(baselines, date));
-
-      setState({
-        metrics,
-        baselineSummary: summarizeBaselinesForPeriod(baselines, range.start, range.end),
-        hasData: metrics.totalRecordDays > 0,
-      });
-
-      track('report_view', { type: 'quarterly', period: `${year}-Q${quarter}` });
-      setLoading(false);
     };
 
     void load();
-  }, [activeUserKey, quarter, repository, year, navigate]);
+  }, [activeUserKey, quarter, repository, year, navigate, showToast]);
 
   const periodLabel = `${year}-Q${quarter}`;
 

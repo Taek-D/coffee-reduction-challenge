@@ -44,32 +44,37 @@ export function MonthlyReportPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const premium = await getFreshPremiumStatus(repository, activeUserKey);
-      if (!isPremiumActive(premium)) {
-        navigate('/premium?entry=report_monthly', { replace: true });
-        return;
+      try {
+        const premium = await getFreshPremiumStatus(repository, activeUserKey);
+        if (!isPremiumActive(premium)) {
+          navigate('/premium?entry=report_monthly', { replace: true });
+          return;
+        }
+
+        const [entries, baselines] = await Promise.all([
+          repository.listEntriesForMonth(activeUserKey, month),
+          repository.getBaselines(activeUserKey),
+        ]);
+        const days = getDaysInMonth(month);
+        const startDate = days[0];
+        const endDate = days.at(-1) ?? `${month}-01`;
+        const metrics = calculateReportMetrics(entries, (date) => resolveBaselineForDate(baselines, date));
+
+        setState({
+          metrics,
+          baselineSummary: summarizeBaselinesForPeriod(baselines, startDate, endDate),
+          hasData: metrics.totalRecordDays > 0,
+        });
+        track('report_view', { type: 'monthly', period: month });
+      } catch {
+        showToast('리포트를 불러오지 못했어요. 다시 시도해요.');
+      } finally {
+        setLoading(false);
       }
-
-      const [entries, baselines] = await Promise.all([
-        repository.listEntriesForMonth(activeUserKey, month),
-        repository.getBaselines(activeUserKey),
-      ]);
-      const days = getDaysInMonth(month);
-      const startDate = days[0];
-      const endDate = days.at(-1) ?? `${month}-01`;
-      const metrics = calculateReportMetrics(entries, (date) => resolveBaselineForDate(baselines, date));
-
-      setState({
-        metrics,
-        baselineSummary: summarizeBaselinesForPeriod(baselines, startDate, endDate),
-        hasData: metrics.totalRecordDays > 0,
-      });
-      track('report_view', { type: 'monthly', period: month });
-      setLoading(false);
     };
 
     void load();
-  }, [activeUserKey, month, navigate, repository]);
+  }, [activeUserKey, month, navigate, repository, showToast]);
 
   const handlePdfSave = async () => {
     track('pdf_export_click', { period: month });
