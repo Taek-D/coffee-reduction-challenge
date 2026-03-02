@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '@toss/tds-mobile';
 import {
   PREMIUM_PLAN_DEFINITIONS,
   PREMIUM_PLANS,
@@ -107,28 +108,29 @@ export function PremiumPage() {
 
       <div className="card">
         {plans.map((plan) => (
-          <button
+          <Button
             key={plan.plan}
-            type="button"
-            className="btn primary full-width"
+            color="primary"
+            size="large"
             onClick={() => handlePurchase(plan.plan)}
             disabled={processingPlan !== null}
           >
             {processingPlan === plan.plan
               ? '결제창을 여는 중...'
               : `${plan.title} 구매하기 (${plan.displayAmount})`}
-          </button>
+          </Button>
         ))}
-        <button
-          type="button"
-          className="btn secondary full-width"
+        <Button
+          color="light"
+          variant="weak"
+          size="large"
           onClick={() => {
             track('premium_dismiss');
             navigate('/today');
           }}
         >
           무료로 계속 쓰기
-        </button>
+        </Button>
       </div>
 
       <div className="actions horizontal">

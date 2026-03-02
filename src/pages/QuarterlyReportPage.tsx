@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '@toss/tds-mobile';
 import { calculateReportMetrics, type ReportMetrics } from '../domain/report';
 import { isPremiumActive } from '../domain/premium';
 import { track } from '../infra/analytics';
@@ -154,20 +155,20 @@ export function QuarterlyReportPage() {
     <section className="screen">
       <h1>분기 고급 리포트</h1>
       <div className="actions horizontal">
-        <button
-          type="button"
-          className="btn secondary"
+        <Button
+          color="light"
+          variant="weak"
           onClick={() => setSearchParams({ year: String(prev.year), quarter: String(prev.quarter) })}
         >
           이전 분기
-        </button>
-        <button
-          type="button"
-          className="btn secondary"
+        </Button>
+        <Button
+          color="light"
+          variant="weak"
           onClick={() => setSearchParams({ year: String(next.year), quarter: String(next.quarter) })}
         >
           다음 분기
-        </button>
+        </Button>
       </div>
 
       <div className="card">
@@ -183,9 +184,9 @@ export function QuarterlyReportPage() {
       </div>
 
       <div className="actions horizontal">
-        <button type="button" className="btn primary" onClick={handlePdfSave}>
+        <Button color="primary" onClick={handlePdfSave}>
           PDF로 저장하기
-        </button>
+        </Button>
         <Link to={`/report/monthly?month=${getQuarterMonths(year, quarter)[2]}`} className="btn secondary">
           월간 리포트
         </Link>
