@@ -190,6 +190,11 @@ export const createIapOrder = async (sku: string): Promise<IapPurchaseResult> =>
       cleanup = IAP.createOneTimePurchaseOrder({
         options: {
           sku,
+          // processProductGrant는 SDK에 "지급 완료"를 알린다.
+          // 실제 PremiumStatus 저장은 premiumService.purchasePremiumPlan()에서
+          // completeIapProductGrant 호출 후 수행된다.
+          // 앱 크래시로 로컬 상태가 미저장되면
+          // AppContext 재진입 시 restorePendingPremiumOrders()가 미결 주문을 복원한다.
           processProductGrant: () => true,
         },
         onEvent: (event) => {
