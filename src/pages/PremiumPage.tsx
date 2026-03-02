@@ -74,9 +74,9 @@ export function PremiumPage() {
       const reason = error instanceof Error ? error.message : 'unknown';
       track('purchase_fail', { reason });
       if (reason === 'IAP_RUNTIME_REQUIRED') {
-        showToast('결제는 앱인토스 런타임에서만 가능합니다.');
+        showToast('결제는 앱인토스 런타임에서만 가능해요.');
       } else {
-        showToast('결제에 실패했어요. 다시 시도해 주세요.');
+        showToast('결제에 실패했어요. 다시 시도해요.');
       }
     } finally {
       setProcessingPlan(null);

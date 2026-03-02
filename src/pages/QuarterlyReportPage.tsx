@@ -130,7 +130,7 @@ export function QuarterlyReportPage() {
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'unknown';
       track('pdf_export_fail', { reason });
-      showToast('PDF 저장에 실패했어요. 다시 시도해 주세요.');
+      showToast('PDF 저장에 실패했어요. 다시 시도해요.');
     }
   };
 
@@ -167,7 +167,7 @@ export function QuarterlyReportPage() {
 
       <div className="card">
         <h2>{toQuarterLabel(year, quarter)}</h2>
-        {!state.hasData && <p className="muted">기록을 많이 남길수록 분석이 정확해져요.</p>}
+        {!state.hasData && <p className="muted">기록이 더 쌓이면 분석이 정확해져요.</p>}
         <p>총 지출 {formatCurrency(state.metrics.totalSpendAmount)}</p>
         <p>기준치 대비 절감 {formatCurrency(state.metrics.totalSavingAmount)}</p>
         <p>기준치 대비 초과 지출 {formatCurrency(state.metrics.totalOverspendAmount)}</p>
