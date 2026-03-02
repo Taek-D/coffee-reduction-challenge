@@ -117,11 +117,11 @@ export function TodayPage() {
           <p className="muted">오늘 기록이 없어요. 한 번만 눌러서 시작해요.</p>
         )}
         <div className="counter-row">
-          <Button color="light" variant="weak" onClick={() => adjustCount(-1)}>
+          <Button color="light" variant="weak" aria-label="커피 1잔 빼기" onClick={() => adjustCount(-1)}>
             −
           </Button>
           <strong className="counter-value">{currentCount}</strong>
-          <Button color="light" variant="weak" onClick={() => adjustCount(1)}>
+          <Button color="light" variant="weak" aria-label="커피 1잔 추가" onClick={() => adjustCount(1)}>
             +
           </Button>
           <span>{formatCurrency(unitAmount)}</span>

@@ -142,6 +142,7 @@ export function CalendarPage() {
               key={item.date}
               type="button"
               className="calendar-cell"
+              aria-label={`${item.date} ${item.label === '✓' ? '절감일' : item.label === '☕' ? '기록일' : '미기록'}`}
               onClick={() => {
                 track('calendar_day_select', { date: item.date });
                 navigate(`/today?date=${formatDateIso(item.date)}`);
