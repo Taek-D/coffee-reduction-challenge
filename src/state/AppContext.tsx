@@ -15,16 +15,24 @@ import {
   type GoalType,
 } from '../domain/models';
 import { APP_STORAGE_KEYS } from '../domain/storageKeys';
-import { restorePendingPremiumOrders } from '../infra/premiumService';
 import { createAppStorage } from '../infra/storage/createAppStorage';
 import { todayDateIso } from '../shared/date';
 
-const DEFAULT_GUEST_USER_KEY = 'guest_local';
+const DEFAULT_BOOT_USER_KEY = 'local_booting';
+
+const createDeviceLocalUserKey = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+  }
+
+  return `local_${Math.random().toString(36).slice(2, 14)}`;
+};
 
 interface AppContextValue {
   ready: boolean;
   onboardingCompleted: boolean;
   activeUserKey: string;
+  deviceLocalUserKey: string;
   repository: CoffeeChallengeRepository;
   completeOnboarding: () => Promise<void>;
   setActiveUserKey: (userKey: string) => Promise<void>;
@@ -39,16 +47,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const repository = useMemo(() => new CoffeeChallengeRepository(storage), [storage]);
 
   const [ready, setReady] = useState(false);
-  const [activeUserKey, setActiveUserKeyState] = useState(DEFAULT_GUEST_USER_KEY);
+  const [activeUserKey, setActiveUserKeyState] = useState(DEFAULT_BOOT_USER_KEY);
+  const [deviceLocalUserKey, setDeviceLocalUserKey] = useState(DEFAULT_BOOT_USER_KEY);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   useEffect(() => {
     const bootstrap = async () => {
+      let localUserKey = await storage.getItem(APP_STORAGE_KEYS.deviceLocalUserKey);
+      if (!localUserKey) {
+        localUserKey = createDeviceLocalUserKey();
+        await storage.setItem(APP_STORAGE_KEYS.deviceLocalUserKey, localUserKey);
+      }
+
       const [storedUserKey, storedOnboarding] = await Promise.all([
         storage.getItem(APP_STORAGE_KEYS.activeUserKey),
         storage.getItem(APP_STORAGE_KEYS.onboardingCompleted),
       ]);
-      setActiveUserKeyState(storedUserKey ?? DEFAULT_GUEST_USER_KEY);
+      const normalizedStoredUserKey = storedUserKey?.trim() || localUserKey;
+
+      if (!storedUserKey?.trim()) {
+        await storage.setItem(APP_STORAGE_KEYS.activeUserKey, normalizedStoredUserKey);
+      }
+
+      setDeviceLocalUserKey(localUserKey);
+      setActiveUserKeyState(normalizedStoredUserKey);
       setOnboardingCompleted(storedOnboarding === '1');
       setReady(true);
     };
@@ -60,10 +82,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
     // 앱 재진입 시 미결 주문이 있으면 복원한다.
-    void restorePendingPremiumOrders({
-      repository,
-      userKey: activeUserKey,
-    }).catch(() => undefined);
+    let cancelled = false;
+
+    void import('../infra/premiumService')
+      .then(({ restorePendingPremiumOrders }) => {
+        if (cancelled) {
+          return;
+        }
+
+        return restorePendingPremiumOrders({
+          repository,
+          userKey: activeUserKey,
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeUserKey, ready, repository]);
 
   const completeOnboarding = useCallback(async () => {
@@ -73,11 +109,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setActiveUserKey = useCallback(
     async (userKey: string) => {
-      const normalized = userKey.trim() || DEFAULT_GUEST_USER_KEY;
+      const normalized = userKey.trim() || deviceLocalUserKey;
       await storage.setItem(APP_STORAGE_KEYS.activeUserKey, normalized);
       setActiveUserKeyState(normalized);
     },
-    [storage],
+    [deviceLocalUserKey, storage],
   );
 
   const ensureDefaultsForCurrentUser = useCallback(
@@ -107,7 +143,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      await repository.ensureDefaultEntryForToday(activeUserKey);
     },
     [activeUserKey, repository],
   );
@@ -121,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ready,
     onboardingCompleted,
     activeUserKey,
+    deviceLocalUserKey,
     repository,
     completeOnboarding,
     setActiveUserKey,

@@ -4,7 +4,6 @@ import { Button, Skeleton } from '@toss/tds-mobile';
 import { calculateReportMetrics, type ReportMetrics } from '../domain/report';
 import { isPremiumActive } from '../domain/premium';
 import { track } from '../infra/analytics';
-import { saveReportPdf } from '../infra/reportPdf';
 import { getFreshPremiumStatus } from '../infra/premiumService';
 import { useAppContext } from '../state/AppContext';
 import { useToast } from '../state/ToastContext';
@@ -119,6 +118,7 @@ export function QuarterlyReportPage() {
   const handlePdfSave = async () => {
     track('pdf_export_click', { period: periodLabel });
     try {
+      const { saveReportPdf } = await import('../infra/reportPdf');
       const saveResult = await saveReportPdf({
         fileName: `coffee-report-${periodLabel}.pdf`,
         title: 'Coffee Reduction Quarterly Report',

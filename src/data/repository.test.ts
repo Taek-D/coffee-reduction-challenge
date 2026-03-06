@@ -48,4 +48,29 @@ describe('CoffeeChallengeRepository', () => {
     expect(u1).toHaveLength(0);
     expect(u2).toHaveLength(1);
   });
+
+  it('does not keep zero-count entries in storage or summaries', async () => {
+    const repository = new CoffeeChallengeRepository(new MemoryStore());
+
+    await repository.upsertEntry('u1', '2026-03-01', { coffee_count: 2, unit_amount: 4500 });
+    await repository.adjustCoffeeCount('u1', '2026-03-01', -2);
+
+    const entry = await repository.getEntry('u1', '2026-03-01');
+    const entries = await repository.listEntriesForMonth('u1', '2026-03');
+
+    expect(entry).toBeNull();
+    expect(entries).toHaveLength(0);
+  });
+
+  it('cleans up legacy zero-count entries when reading them', async () => {
+    const repository = new CoffeeChallengeRepository(new MemoryStore());
+
+    await repository.upsertEntry('u1', '2026-03-01', { coffee_count: 0, unit_amount: 4500 });
+
+    const entry = await repository.getEntry('u1', '2026-03-01');
+    const entries = await repository.listEntriesForMonth('u1', '2026-03');
+
+    expect(entry).toBeNull();
+    expect(entries).toHaveLength(0);
+  });
 });

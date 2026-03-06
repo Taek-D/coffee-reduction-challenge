@@ -1,10 +1,18 @@
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
-import { isAppsInTossRuntime, sendAnalyticsEvent } from './appsInToss';
+
+const isAppsInTossRuntime = (): boolean => {
+  return (
+    typeof window !== 'undefined' &&
+    (typeof (window as { AppsInToss?: unknown }).AppsInToss !== 'undefined' ||
+      typeof (window as { ReactNativeWebView?: unknown }).ReactNativeWebView !== 'undefined')
+  );
+};
 
 export const track = (eventName: string, properties?: EventProperties): void => {
   void (async () => {
     if (isAppsInTossRuntime()) {
       try {
+        const { sendAnalyticsEvent } = await import('./appsInToss');
         await sendAnalyticsEvent(eventName, properties);
         return;
       } catch {

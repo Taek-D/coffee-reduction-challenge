@@ -43,6 +43,10 @@ export function calculateMonthlySummary(
 ): MonthlySummary {
   return entries.reduce<MonthlySummary>(
     (acc, entry) => {
+      if (entry.coffee_count <= 0) {
+        return acc;
+      }
+
       const baseline = resolveBaseline(entry.date);
       if (!baseline) {
         return acc;

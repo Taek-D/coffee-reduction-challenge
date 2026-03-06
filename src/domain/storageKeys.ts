@@ -1,5 +1,6 @@
 export const APP_STORAGE_KEYS = {
   activeUserKey: 'app:activeUserKey',
+  deviceLocalUserKey: 'app:deviceLocalUserKey',
   onboardingCompleted: 'app:onboardingCompleted',
 } as const;
 

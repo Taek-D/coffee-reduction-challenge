@@ -1,6 +1,5 @@
-import { appsInTossStorage, isAppsInTossRuntime } from '../appsInToss';
 import { LocalStorageStore } from './localStorageStore';
-import { NativeStorageStub } from './nativeStorageStub';
+import { NativeStorageStub, type NativeStorageSdkLike } from './nativeStorageStub';
 import type { KeyValueStore } from './types';
 
 declare global {
@@ -14,11 +13,34 @@ declare global {
   }
 }
 
+const isAppsInTossRuntime = (): boolean => {
+  return (
+    typeof window !== 'undefined' &&
+    (typeof (window as { AppsInToss?: unknown }).AppsInToss !== 'undefined' ||
+      typeof (window as { ReactNativeWebView?: unknown }).ReactNativeWebView !== 'undefined')
+  );
+};
+
+const createLazyAppsInTossStorage = (): NativeStorageSdkLike => ({
+  async getItem(key) {
+    const { appsInTossStorage } = await import('../appsInToss');
+    return appsInTossStorage.getItem(key);
+  },
+  async setItem(key, value) {
+    const { appsInTossStorage } = await import('../appsInToss');
+    await appsInTossStorage.setItem(key, value);
+  },
+  async removeItem(key) {
+    const { appsInTossStorage } = await import('../appsInToss');
+    await appsInTossStorage.removeItem(key);
+  },
+});
+
 export function createAppStorage(): KeyValueStore {
   const localFallback = new LocalStorageStore();
 
   if (isAppsInTossRuntime()) {
-    return new NativeStorageStub(appsInTossStorage, localFallback);
+    return new NativeStorageStub(createLazyAppsInTossStorage(), localFallback);
   }
 
   const nativeStorage = window.__APP_IN_TOSS_STORAGE__;

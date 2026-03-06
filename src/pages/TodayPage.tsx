@@ -6,7 +6,7 @@ import { DEFAULT_UNIT_AMOUNT, type BaselineVersion, type Entry } from '../domain
 import { track } from '../infra/analytics';
 import { useAppContext } from '../state/AppContext';
 import { useToast } from '../state/ToastContext';
-import { getMonthFromDate, todayDateIso, formatDateLabel } from '../shared/date';
+import { formatDateLabel, getMonthFromDate, todayDateIso } from '../shared/date';
 import { formatCurrency, parseNumberInput } from '../shared/format';
 
 interface TodayState {
@@ -44,7 +44,7 @@ export function TodayPage() {
       baseline,
       monthlySavingAmount: monthlySummary.savingAmount,
     });
-    setUnitAmountInput(String(entry?.unit_amount ?? DEFAULT_UNIT_AMOUNT));
+    setUnitAmountInput(String(entry?.unit_amount ?? baseline?.unit_amount ?? DEFAULT_UNIT_AMOUNT));
     setLoading(false);
   };
 
@@ -66,9 +66,25 @@ export function TodayPage() {
     });
   }, [state.baseline, state.entry]);
 
+  const currentCount = state.entry?.coffee_count ?? 0;
+  const draftUnitAmount = parseNumberInput(unitAmountInput);
+  const visibleUnitAmount =
+    state.entry?.unit_amount ?? draftUnitAmount ?? state.baseline?.unit_amount ?? DEFAULT_UNIT_AMOUNT;
+
   const adjustCount = async (delta: number) => {
+    if (delta < 0 && currentCount === 0) {
+      return;
+    }
+
     try {
-      const nextEntry = await repository.adjustCoffeeCount(activeUserKey, selectedDate, delta);
+      const nextEntry =
+        !state.entry && delta > 0
+          ? await repository.upsertEntry(activeUserKey, selectedDate, {
+              coffee_count: 1,
+              unit_amount: visibleUnitAmount,
+            })
+          : await repository.adjustCoffeeCount(activeUserKey, selectedDate, delta);
+
       track('entry_adjust', {
         date: selectedDate,
         delta,
@@ -76,14 +92,20 @@ export function TodayPage() {
       });
       await load();
     } catch {
-      showToast('저장에 실패했어요. 다시 시도해요.');
+      showToast('저장에 실패했어요. 다시 시도해 주세요.');
     }
   };
 
   const saveUnitAmount = async () => {
     const value = parseNumberInput(unitAmountInput);
     if (value === null || value < 100 || value > 50_000) {
-      showToast('단가는 100원 이상으로 입력해요.');
+      showToast('단가는 100원 이상으로 입력해 주세요.');
+      return;
+    }
+
+    if (!state.entry) {
+      setUnitAmountInput(String(value));
+      showToast('첫 기록을 추가하면 이 단가가 함께 저장돼요.');
       return;
     }
 
@@ -92,7 +114,7 @@ export function TodayPage() {
       track('unit_amount_edit_save', { unit_amount: value });
       await load();
     } catch {
-      showToast('저장에 실패했어요. 다시 시도해요.');
+      showToast('저장에 실패했어요. 다시 시도해 주세요.');
     }
   };
 
@@ -104,9 +126,6 @@ export function TodayPage() {
     );
   }
 
-  const currentCount = state.entry?.coffee_count ?? 0;
-  const unitAmount = state.entry?.unit_amount ?? DEFAULT_UNIT_AMOUNT;
-
   return (
     <section className="screen">
       <h1>{formatDateLabel(selectedDate)}</h1>
@@ -114,22 +133,28 @@ export function TodayPage() {
       <div className="card">
         <h2>오늘 커피 기록</h2>
         {currentCount === 0 && (
-          <p className="muted">오늘 기록이 없어요. 한 번만 눌러서 시작해요.</p>
+          <p className="muted">오늘 기록이 없어요. + 버튼을 눌러 첫 기록을 시작해 보세요.</p>
         )}
         <div className="counter-row">
-          <Button color="light" variant="weak" aria-label="커피 1잔 빼기" onClick={() => adjustCount(-1)}>
-            −
+          <Button
+            color="light"
+            variant="weak"
+            aria-label="커피 1잔 줄이기"
+            onClick={() => adjustCount(-1)}
+            disabled={currentCount === 0}
+          >
+            -
           </Button>
           <strong className="counter-value">{currentCount}</strong>
           <Button color="light" variant="weak" aria-label="커피 1잔 추가" onClick={() => adjustCount(1)}>
             +
           </Button>
-          <span>{formatCurrency(unitAmount)}</span>
+          <span>{formatCurrency(visibleUnitAmount)}</span>
         </div>
       </div>
 
       <div className="card">
-        <p>오늘 지출 {formatCurrency((state.entry?.coffee_count ?? 0) * unitAmount)}</p>
+        <p>오늘 지출 {formatCurrency((state.entry?.coffee_count ?? 0) * visibleUnitAmount)}</p>
         <p>오늘 절감 {formatCurrency(metrics?.savingDaily ?? 0)}</p>
         <p className="muted">기록 기반 추정</p>
       </div>
@@ -149,6 +174,9 @@ export function TodayPage() {
           value={unitAmountInput}
           onChange={(event) => setUnitAmountInput(event.target.value)}
         />
+        {!state.entry && (
+          <p className="muted">아직 기록이 없어요. 저장한 단가는 첫 기록을 추가할 때 함께 반영돼요.</p>
+        )}
         <Button color="light" variant="weak" onClick={saveUnitAmount}>
           단가 저장
         </Button>

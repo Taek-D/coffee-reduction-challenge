@@ -21,6 +21,8 @@ const getExchangeEndpoint = (): string | null => {
   return endpoint.trim();
 };
 
+export const isUserKeyExchangeConfigured = (): boolean => getExchangeEndpoint() !== null;
+
 export async function resolveUserKeyFromAuthorizationCode(
   loginResult: AppLoginResult,
 ): Promise<UserKeyResolution> {
@@ -28,7 +30,7 @@ export async function resolveUserKeyFromAuthorizationCode(
   if (!endpoint) {
     return {
       ok: false,
-      reason: '서버 교환 엔드포인트가 없어 userKey 자동 획득을 건너뛰어요.',
+      reason: '자동 식별 연동이 준비되지 않아 현재 기기 식별값으로 계속해야 해요.',
     };
   }
 
@@ -47,7 +49,7 @@ export async function resolveUserKeyFromAuthorizationCode(
     if (!response.ok) {
       return {
         ok: false,
-        reason: `userKey 교환 요청이 실패했어요(${response.status}).`,
+        reason: `식별값 교환 요청이 실패했어요. (${response.status})`,
       };
     }
 
@@ -56,7 +58,7 @@ export async function resolveUserKeyFromAuthorizationCode(
     if (!rawUserKey) {
       return {
         ok: false,
-        reason: '응답에 userKey가 없어 자동 획득을 건너뛰어요.',
+        reason: '식별값 응답이 비어 있어 현재 기기 식별값으로 계속해야 해요.',
       };
     }
 
@@ -67,7 +69,7 @@ export async function resolveUserKeyFromAuthorizationCode(
   } catch {
     return {
       ok: false,
-      reason: 'userKey 자동 획득 중 네트워크 오류가 발생했어요.',
+      reason: '자동 식별 중 네트워크 오류가 발생했어요.',
     };
   }
 }

@@ -9,7 +9,7 @@ import {
 } from '../domain/models';
 import { userStorageKeys } from '../domain/storageKeys';
 import type { KeyValueStore } from '../infra/storage/types';
-import { formatDateIso, getDaysInMonth, getMonthFromDate, toDateKey, todayDateIso } from '../shared/date';
+import { getDaysInMonth, getMonthFromDate } from '../shared/date';
 
 const parseJson = <T>(raw: string | null): T | null => {
   if (!raw) {
@@ -53,9 +53,38 @@ export class CoffeeChallengeRepository {
     await this.setEntryIndex(userKey, index);
   }
 
+  private async removeDateFromEntryIndex(userKey: string, date: string): Promise<void> {
+    const index = await this.getEntryIndex(userKey);
+    if (!index.includes(date)) {
+      return;
+    }
+
+    await this.setEntryIndex(
+      userKey,
+      index.filter((storedDate) => storedDate !== date),
+    );
+  }
+
+  private async deleteEntry(userKey: string, date: string): Promise<void> {
+    await Promise.all([
+      this.storage.removeItem(userStorageKeys.entry(userKey, date)),
+      this.removeDateFromEntryIndex(userKey, date),
+    ]);
+  }
+
   async getEntry(userKey: string, date: string): Promise<Entry | null> {
     const key = userStorageKeys.entry(userKey, date);
-    return parseJson<Entry>(await this.storage.getItem(key));
+    const entry = parseJson<Entry>(await this.storage.getItem(key));
+    if (!entry) {
+      return null;
+    }
+
+    if (entry.coffee_count <= 0) {
+      await this.deleteEntry(userKey, date);
+      return null;
+    }
+
+    return entry;
   }
 
   async upsertEntry(
@@ -72,6 +101,12 @@ export class CoffeeChallengeRepository {
       unit_amount: existing?.unit_amount ?? DEFAULT_UNIT_AMOUNT,
       ...next,
     };
+
+    if (entry.coffee_count <= 0) {
+      await this.deleteEntry(userKey, date);
+      return entry;
+    }
+
     await this.storage.setItem(userStorageKeys.entry(userKey, date), JSON.stringify(entry));
     await this.addDateToEntryIndex(userKey, date);
     return entry;
@@ -107,7 +142,7 @@ export class CoffeeChallengeRepository {
         parseJson<Entry>(await this.storage.getItem(userStorageKeys.entry(userKey, date))),
       ),
     );
-    return entries.filter((entry): entry is Entry => entry !== null);
+    return entries.filter((entry): entry is Entry => entry !== null && entry.coffee_count > 0);
   }
 
   async getGoal(userKey: string): Promise<Goal | null> {
@@ -185,17 +220,5 @@ export class CoffeeChallengeRepository {
     const legacyPrefix = userStorageKeys.entriesPrefix(userKey);
     const legacyKeys = await this.storage.getKeysByPrefix(legacyPrefix);
     await Promise.all(legacyKeys.map((key) => this.storage.removeItem(key)));
-  }
-
-  async ensureDefaultEntryForToday(userKey: string): Promise<Entry> {
-    const date = formatDateIso(todayDateIso());
-    const entry = await this.getEntry(userKey, date);
-    if (entry) {
-      return entry;
-    }
-    return this.upsertEntry(userKey, toDateKey(date), {
-      coffee_count: 0,
-      unit_amount: DEFAULT_UNIT_AMOUNT,
-    });
   }
 }
